@@ -7,35 +7,129 @@
     <title>Ryutaro Kondo | Student Tools</title>
 
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
+            margin: 0;
             font-family: Arial, sans-serif;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 40px 20px;
             background-color: #f5f5f5;
             color: #222;
         }
 
-        h1 {
-            text-align: center;
-            margin-bottom: 10px;
+        /* =========================
+           SIDEBAR
+           ========================= */
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background-color: #222;
+            color: white;
+            padding: 30px 20px;
+            overflow-y: auto;
         }
 
-        .intro {
-            text-align: center;
-            margin-bottom: 40px;
+        .sidebar h1 {
+            font-size: 22px;
+            margin: 0 0 35px 10px;
         }
+
+        .menu-section {
+            margin-bottom: 25px;
+        }
+
+        .menu-title {
+            display: block;
+            padding: 10px;
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .menu-title:hover {
+            background-color: #444;
+        }
+
+        .submenu {
+            margin-left: 15px;
+            margin-top: 5px;
+        }
+
+        .submenu a {
+            display: block;
+            padding: 10px;
+            color: #ccc;
+            text-decoration: none;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .submenu a:hover {
+            background-color: #444;
+            color: white;
+        }
+
+
+        /* =========================
+           MAIN CONTENT
+           ========================= */
+
+        .main {
+            margin-left: 260px;
+            padding: 50px;
+            min-height: 100vh;
+        }
+
+        .content {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .welcome {
+            background-color: white;
+            padding: 50px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .welcome h2 {
+            margin-top: 0;
+            font-size: 32px;
+        }
+
+        .welcome p {
+            font-size: 17px;
+            line-height: 1.7;
+        }
+
+
+        /* =========================
+           CALCULATOR
+           ========================= */
 
         .calculator {
-            background: white;
+            background-color: white;
             padding: 30px;
-            border-radius: 10px;
+            border-radius: 12px;
             margin-bottom: 30px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 
-        h2 {
+        .calculator h2 {
             margin-top: 0;
+        }
+
+        .calculator-description {
+            line-height: 1.6;
+            margin-bottom: 30px;
         }
 
         .module {
@@ -43,7 +137,7 @@
             grid-template-columns: 1fr 100px 150px;
             gap: 15px;
             align-items: center;
-            padding: 12px 0;
+            padding: 14px 0;
             border-bottom: 1px solid #ddd;
         }
 
@@ -51,13 +145,17 @@
             border-bottom: none;
         }
 
-        select {
-            padding: 8px;
-            font-size: 15px;
-        }
-
         .credits {
             text-align: center;
+            color: #555;
+        }
+
+        select {
+            padding: 9px;
+            font-size: 15px;
+            border: 1px solid #bbb;
+            border-radius: 5px;
+            background-color: white;
         }
 
         .buttons {
@@ -91,21 +189,44 @@
             font-weight: bold;
         }
 
-        .explanation {
-            margin-top: 15px;
-            font-size: 15px;
-            font-weight: normal;
-            text-align: left;
-        }
 
-        @media (max-width: 600px) {
+        /* =========================
+           MOBILE
+           ========================= */
+
+        @media (max-width: 700px) {
+
+            .sidebar {
+                position: relative;
+                width: 100%;
+                height: auto;
+                padding: 20px;
+            }
+
+            .sidebar h1 {
+                margin-bottom: 20px;
+            }
+
+            .main {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .welcome {
+                padding: 30px;
+            }
+
             .module {
                 grid-template-columns: 1fr;
-                gap: 5px;
+                gap: 7px;
             }
 
             .credits {
                 text-align: left;
+            }
+
+            select {
+                width: 100%;
             }
 
             .buttons {
@@ -119,145 +240,411 @@
     </style>
 </head>
 
+
 <body>
 
-    <h1>Student GPA Calculator</h1>
+    <!-- =========================
+         SIDEBAR
+         ========================= -->
 
-    <p class="intro">
-        Select the grades you expect to receive and calculate your potential GPA.
-    </p>
+    <aside class="sidebar">
 
-    <div class="calculator">
+        <h1>Ryutaro Kondo</h1>
 
-        <h2>Semester 1</h2>
+        <div class="menu-section">
 
-        <div class="module">
-            <strong>Product Prototyping</strong>
-            <span class="credits">2 credits</span>
-            <select id="product">
-                <option value="">Select grade</option>
-                <option value="4">A</option>
-                <option value="3">B</option>
-                <option value="2">C</option>
-                <option value="1">D</option>
-            </select>
+            <a class="menu-title" onclick="showAbout()">
+                About
+            </a>
+
         </div>
 
-        <div class="module">
-            <strong>M5 Advanced Materials & Metrology</strong>
-            <span class="credits">6 credits</span>
-            <select id="materials">
-                <option value="">Select grade</option>
-                <option value="4">A</option>
-                <option value="3">B</option>
-                <option value="2">C</option>
-                <option value="1">D</option>
-            </select>
+
+        <div class="menu-section">
+
+            <a class="menu-title">
+                GPA Calculator
+            </a>
+
+            <div class="submenu">
+
+                <a onclick="showGPA()">
+                    HNITEC Precision Engineering (1 Yr)
+                </a>
+
+            </div>
+
         </div>
 
-        <div class="module">
-            <strong>M6 Advanced Machining & Tooling Management</strong>
-            <span class="credits">7 credits</span>
-            <select id="machining">
-                <option value="">Select grade</option>
-                <option value="4">A</option>
-                <option value="3">B</option>
-                <option value="2">C</option>
-                <option value="1">D</option>
-            </select>
+    </aside>
+
+
+    <!-- =========================
+         MAIN CONTENT
+         ========================= -->
+
+    <main class="main">
+
+        <div class="content">
+
+
+            <!-- WELCOME -->
+
+            <section id="welcome" class="welcome">
+
+                <h2>Welcome</h2>
+
+                <p>
+                    Welcome. I am glad you are here. I intend to use this
+                    domain to include useful tools for students. For now,
+                    please enjoy the GPA calculator.
+                </p>
+
+                <p>
+                    Please select an option from the menu to get started.
+                </p>
+
+            </section>
+
+
+            <!-- ABOUT -->
+
+            <section id="about" class="welcome" style="display: none;">
+
+                <h2>About</h2>
+
+                <p>
+                    Welcome. I am glad you are here. I intend to use this
+                    domain to include useful tools for students. For now,
+                    please enjoy the GPA calculator.
+                </p>
+
+            </section>
+
+
+            <!-- GPA CALCULATOR -->
+
+            <section id="gpa" style="display: none;">
+
+                <div class="calculator">
+
+                    <h2>HNITEC Precision Engineering (1 Yr)</h2>
+
+                    <p class="calculator-description">
+                        Select the grades you expect to receive / have received
+                        and calculate your potential GPA.
+                    </p>
+
+
+                    <!-- SEMESTER 1 -->
+
+                    <h3>Semester 1</h3>
+
+                    <div class="module">
+
+                        <strong>Product Prototyping</strong>
+
+                        <span class="credits">
+                            2 credits
+                        </span>
+
+                        <select id="product">
+
+                            <option value="">
+                                Select grade
+                            </option>
+
+                            <option value="4">
+                                A
+                            </option>
+
+                            <option value="3">
+                                B
+                            </option>
+
+                            <option value="2">
+                                C
+                            </option>
+
+                            <option value="1">
+                                D
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="module">
+
+                        <strong>
+                            M5 Advanced Materials & Metrology
+                        </strong>
+
+                        <span class="credits">
+                            6 credits
+                        </span>
+
+                        <select id="materials">
+
+                            <option value="">
+                                Select grade
+                            </option>
+
+                            <option value="4">
+                                A
+                            </option>
+
+                            <option value="3">
+                                B
+                            </option>
+
+                            <option value="2">
+                                C
+                            </option>
+
+                            <option value="1">
+                                D
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="module">
+
+                        <strong>
+                            M6 Advanced Machining & Tooling Management
+                        </strong>
+
+                        <span class="credits">
+                            7 credits
+                        </span>
+
+                        <select id="machining">
+
+                            <option value="">
+                                Select grade
+                            </option>
+
+                            <option value="4">
+                                A
+                            </option>
+
+                            <option value="3">
+                                B
+                            </option>
+
+                            <option value="2">
+                                C
+                            </option>
+
+                            <option value="1">
+                                D
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="buttons">
+
+                        <button onclick="calculateSemester1()">
+                            Calculate Semester 1 GPA
+                        </button>
+
+                    </div>
+
+
+                    <div id="result1" class="result">
+
+                        Semester 1 GPA will appear here.
+
+                    </div>
+
+                </div>
+
+
+                <!-- SEMESTER 2 -->
+
+                <div class="calculator">
+
+                    <h3>Semester 2</h3>
+
+                    <div class="module">
+
+                        <strong>
+                            Industrial Attachment
+                        </strong>
+
+                        <span class="credits">
+                            8 credits
+                        </span>
+
+                        <select id="attachment">
+
+                            <option value="">
+                                Select grade
+                            </option>
+
+                            <option value="4">
+                                A
+                            </option>
+
+                            <option value="3">
+                                B
+                            </option>
+
+                            <option value="2">
+                                C
+                            </option>
+
+                            <option value="1">
+                                D
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="buttons">
+
+                        <button onclick="calculateSemester2()">
+                            Calculate Semester 2 GPA
+                        </button>
+
+                    </div>
+
+
+                    <div id="result2" class="result">
+
+                        Semester 2 GPA will appear here.
+
+                    </div>
+
+                </div>
+
+
+                <!-- FINAL GPA -->
+
+                <div class="calculator">
+
+                    <h3>Final Overall GPA</h3>
+
+                    <p>
+                        This calculation combines all Semester 1 and
+                        Semester 2 modules, weighted according to their
+                        module credits.
+                    </p>
+
+
+                    <div class="buttons">
+
+                        <button onclick="calculateFinalGPA()">
+                            Calculate Final Overall GPA
+                        </button>
+
+                    </div>
+
+
+                    <div id="result3" class="result">
+
+                        Final overall GPA will appear here.
+
+                    </div>
+
+                </div>
+
+            </section>
+
         </div>
 
-        <div class="buttons">
-            <button onclick="calculateSemester1()">
-                Calculate Semester 1 GPA
-            </button>
-        </div>
-
-        <div id="result1" class="result">
-            Semester 1 GPA will appear here.
-        </div>
-
-    </div>
+    </main>
 
 
-    <div class="calculator">
-
-        <h2>Semester 2</h2>
-
-        <div class="module">
-            <strong>Industrial Attachment</strong>
-            <span class="credits">8 credits</span>
-            <select id="attachment">
-                <option value="">Select grade</option>
-                <option value="4">A</option>
-                <option value="3">B</option>
-                <option value="2">C</option>
-                <option value="1">D</option>
-            </select>
-        </div>
-
-        <div class="buttons">
-            <button onclick="calculateSemester2()">
-                Calculate Semester 2 GPA
-            </button>
-        </div>
-
-        <div id="result2" class="result">
-            Semester 2 GPA will appear here.
-        </div>
-
-    </div>
-
-
-    <div class="calculator">
-
-        <h2>Final Overall GPA</h2>
-
-        <p>
-            This calculation combines all Semester 1 and Semester 2 modules,
-            weighted according to their module credits.
-        </p>
-
-        <div class="buttons">
-            <button onclick="calculateFinalGPA()">
-                Calculate Final Overall GPA
-            </button>
-        </div>
-
-        <div id="result3" class="result">
-            Final overall GPA will appear here.
-        </div>
-
-    </div>
-
+    <!-- =========================
+         JAVASCRIPT
+         ========================= -->
 
     <script>
 
+
+        function hideAllPages() {
+
+            document.getElementById("welcome").style.display = "none";
+
+            document.getElementById("about").style.display = "none";
+
+            document.getElementById("gpa").style.display = "none";
+
+        }
+
+
+        function showAbout() {
+
+            hideAllPages();
+
+            document.getElementById("about").style.display = "block";
+
+        }
+
+
+        function showGPA() {
+
+            hideAllPages();
+
+            document.getElementById("gpa").style.display = "block";
+
+        }
+
+
         function calculateSemester1() {
 
-            const product = document.getElementById("product").value;
-            const materials = document.getElementById("materials").value;
-            const machining = document.getElementById("machining").value;
+            const product =
+                document.getElementById("product").value;
 
-            if (product === "" || materials === "" || machining === "") {
+            const materials =
+                document.getElementById("materials").value;
+
+            const machining =
+                document.getElementById("machining").value;
+
+
+            if (
+                product === "" ||
+                materials === "" ||
+                machining === ""
+            ) {
+
                 document.getElementById("result1").innerHTML =
                     "Please select a grade for every Semester 1 module.";
+
                 return;
+
             }
+
 
             const totalPoints =
                 (Number(product) * 2) +
                 (Number(materials) * 6) +
                 (Number(machining) * 7);
 
+
             const totalCredits = 15;
 
-            const gpa = totalPoints / totalCredits;
+
+            const gpa =
+                totalPoints / totalCredits;
+
 
             document.getElementById("result1").innerHTML =
                 "Potential Semester 1 GPA: <strong>" +
                 gpa.toFixed(2) +
                 "</strong>";
+
         }
 
 
@@ -266,27 +653,43 @@
             const attachment =
                 document.getElementById("attachment").value;
 
+
             if (attachment === "") {
+
                 document.getElementById("result2").innerHTML =
                     "Please select a grade for Industrial Attachment.";
+
                 return;
+
             }
 
-            const gpa = Number(attachment);
+
+            const gpa =
+                Number(attachment);
+
 
             document.getElementById("result2").innerHTML =
                 "Potential Semester 2 GPA: <strong>" +
                 gpa.toFixed(2) +
                 "</strong>";
+
         }
 
 
         function calculateFinalGPA() {
 
-            const product = document.getElementById("product").value;
-            const materials = document.getElementById("materials").value;
-            const machining = document.getElementById("machining").value;
-            const attachment = document.getElementById("attachment").value;
+            const product =
+                document.getElementById("product").value;
+
+            const materials =
+                document.getElementById("materials").value;
+
+            const machining =
+                document.getElementById("machining").value;
+
+            const attachment =
+                document.getElementById("attachment").value;
+
 
             if (
                 product === "" ||
@@ -294,31 +697,41 @@
                 machining === "" ||
                 attachment === ""
             ) {
+
                 document.getElementById("result3").innerHTML =
                     "Please select a grade for every module.";
+
                 return;
+
             }
+
 
             const semester1Points =
                 (Number(product) * 2) +
                 (Number(materials) * 6) +
                 (Number(machining) * 7);
 
+
             const semester2Points =
                 Number(attachment) * 8;
+
 
             const totalPoints =
                 semester1Points + semester2Points;
 
+
             const totalCredits = 23;
+
 
             const finalGPA =
                 totalPoints / totalCredits;
+
 
             document.getElementById("result3").innerHTML =
                 "Potential Final Overall GPA: <strong>" +
                 finalGPA.toFixed(2) +
                 "</strong>";
+
         }
 
     </script>
