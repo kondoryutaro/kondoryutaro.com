@@ -186,6 +186,13 @@ Export Bus CSV
 
 </button>
 
+<button class="export-button"
+onclick="resetSession()">
+
+    Reset / New Session
+
+</button>
+    
 </div>
 
 
@@ -771,6 +778,29 @@ function loadLocal() {
 
 }
 
+function resetSession() {
+
+    let answer = confirm(
+        "Clear all current passenger and bus data?"
+    );
+
+    if (!answer) return;
+
+    passengerData = [];
+    busData = [];
+    activeBuses = {};
+    passengerTotal = 0;
+
+    localStorage.removeItem("passengerData");
+    localStorage.removeItem("busData");
+    localStorage.removeItem("activeBuses");
+    localStorage.removeItem("passengerTotal");
+
+    updatePassengerDisplay();
+    updateActiveBuses();
+
+    alert("New session started.");
+}
 
 
 loadLocal();
