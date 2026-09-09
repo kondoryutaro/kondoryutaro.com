@@ -986,7 +986,43 @@ function showQRGenerator() {
             ).style.display = "inline-block";
 
         }
+function downloadQR() {
 
+    const canvas =
+        document.getElementById("qrCanvas");
+
+    const qrText =
+        document.getElementById("qrText").value.trim();
+
+    const qrLabel =
+        document.getElementById("qrLabel").value.trim();
+
+
+    const link =
+        document.createElement("a");
+
+
+    let filename = qrText;
+
+    if (qrLabel !== "") {
+
+        filename =
+            qrLabel.replace(/[^a-z0-9]/gi, "_") +
+            "_" +
+            qrText;
+
+    }
+
+
+    link.download =
+        filename + ".png";
+
+    link.href =
+        canvas.toDataURL("image/png");
+
+    link.click();
+
+}
     </script>
 
 </body>
