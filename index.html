@@ -905,7 +905,7 @@ function showQRGenerator() {
 
 
                 canvas.width = 380;
-                canvas.height = 400;
+                canvas.height = 420;
 
 
                 ctx.fillStyle = "white";
@@ -922,28 +922,70 @@ if (qrLabel !== "") {
 
     ctx.fillStyle = "black";
     ctx.textAlign = "center";
+    ctx.font = "bold 22px Arial";
 
-    let fontSize = 24;
+    const maxWidth = canvas.width - 40;
 
-    ctx.font = "bold " + fontSize + "px Arial";
+    const words = qrLabel.split(" ");
 
-    while (
-        ctx.measureText(qrLabel).width > canvas.width - 40 &&
-        fontSize > 12
-    ) {
+    let line1 = "";
+    let line2 = "";
 
-        fontSize--;
+    for (let i = 0; i < words.length; i++) {
 
-        ctx.font = "bold " + fontSize + "px Arial";
+        const testLine =
+            line1 + (line1 === "" ? "" : " ") + words[i];
 
+        if (ctx.measureText(testLine).width <= maxWidth) {
+
+            line1 = testLine;
+
+        } else {
+
+            line2 = words.slice(i).join(" ");
+            break;
+
+        }
     }
 
-    ctx.fillText(
-        qrLabel,
-        canvas.width / 2,
-        35
-    );
+    if (line2 === "") {
 
+        ctx.fillText(
+            line1,
+            canvas.width / 2,
+            35
+        );
+
+    } else {
+
+        let fontSize = 22;
+
+        while (
+            (
+                ctx.measureText(line1).width > maxWidth ||
+                ctx.measureText(line2).width > maxWidth
+            ) &&
+            fontSize > 12
+        ) {
+
+            fontSize--;
+
+            ctx.font =
+                "bold " + fontSize + "px Arial";
+        }
+
+        ctx.fillText(
+            line1,
+            canvas.width / 2,
+            28
+        );
+
+        ctx.fillText(
+            line2,
+            canvas.width / 2,
+            52
+        );
+    }
 }
 
 
@@ -952,7 +994,7 @@ if (qrLabel !== "") {
                     ctx.drawImage(
                         qrCanvas,
                         40,
-                        65,
+                        85,
                         300,
                         300
                     );
