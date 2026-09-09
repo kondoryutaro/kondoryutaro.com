@@ -918,21 +918,33 @@ function showQRGenerator() {
                 );
 
 
-                if (qrLabel !== "") {
+if (qrLabel !== "") {
 
-                    ctx.fillStyle = "black";
+    ctx.fillStyle = "black";
+    ctx.textAlign = "center";
 
-                    ctx.font = "bold 24px Arial";
+    let fontSize = 24;
 
-                    ctx.textAlign = "center";
+    ctx.font = "bold " + fontSize + "px Arial";
 
-                    ctx.fillText(
-                        qrLabel,
-                        canvas.width / 2,
-                        35
-                    );
+    while (
+        ctx.measureText(qrLabel).width > canvas.width - 40 &&
+        fontSize > 12
+    ) {
 
-                }
+        fontSize--;
+
+        ctx.font = "bold " + fontSize + "px Arial";
+
+    }
+
+    ctx.fillText(
+        qrLabel,
+        canvas.width / 2,
+        35
+    );
+
+}
 
 
                 if (qrCanvas) {
