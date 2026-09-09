@@ -215,7 +215,9 @@ function nowString() {
 
     String(d.getMinutes()).padStart(2, "0") + ":" +
 
-    String(d.getSeconds()).padStart(2, "0");
+    String(d.getSeconds()).padStart(2, "0") + "." +
+
+    String(d.getMilliseconds()).padStart(3, "0");
 
 }
 
@@ -224,10 +226,30 @@ function nowString() {
 function recordPassenger(number) {
 
     let time = nowString();
+    let currentTime = new Date(time.replace(" ", "T"));
 
     for (let i = 0; i < number; i++) {
 
-        passengerData.push(time);
+        let interarrival = "";
+
+        if (passengerData.length > 0) {
+
+            let previousTime =
+                new Date(
+                    passengerData[
+                        passengerData.length - 1
+                    ].time.replace(" ", "T")
+                );
+
+            interarrival =
+                ((currentTime - previousTime) / 1000)
+                .toFixed(3);
+        }
+
+        passengerData.push({
+            time: time,
+            interarrival: interarrival
+        });
 
     }
 
@@ -236,7 +258,6 @@ function recordPassenger(number) {
     updatePassengerDisplay();
 
     saveLocal();
-
 }
 
 
@@ -341,9 +362,7 @@ function busDeparts(service) {
         new Date(departure.replace(" ", "T"));
 
     let dwellSeconds =
-        Math.round(
-            (departureDate - arrivalDate) / 1000
-        );
+        (departureDate - arrivalDate) / 1000;
 
     busData.push({
 
@@ -545,12 +564,14 @@ function downloadCSV(
 function exportPassengerCSV() {
 
     let csv =
-        "DateTime\n";
+        "DateTime,InterarrivalTimeSeconds\n";
 
     passengerData.forEach(
-        function(time) {
+        function(passenger) {
 
-            csv += time + "\n";
+            csv +=
+                passenger.time + "," +
+                passenger.interarrival + "\n";
 
         }
     );
@@ -566,7 +587,6 @@ function exportPassengerCSV() {
 
         csv
     );
-
 }
 
 
