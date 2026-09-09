@@ -247,26 +247,34 @@
          SIDEBAR
          ========================= -->
 
-    <aside class="sidebar">
+<aside class="sidebar">
 
-        <h1>Kondo Ryutaro</h1>
+    <h1>Kondo Ryutaro</h1>
 
-        <div class="menu-section">
+    <div class="menu-section">
 
-            <a class="menu-title" onclick="showAbout()">
-                About
+        <a class="menu-title" onclick="showAbout()">
+            About
+        </a>
+
+    </div>
+
+
+    <div class="menu-section">
+
+        <a class="menu-title" onclick="toggleTools()">
+            <span id="toolsArrow">▶</span> Tools
+        </a>
+
+        <div id="toolsMenu" class="submenu" style="display: none;">
+
+            <a onclick="toggleGPA()">
+                <span id="gpaArrow">▶</span> GPA Calculator
             </a>
 
-        </div>
-
-
-        <div class="menu-section">
-
-            <a class="menu-title">
-                GPA Calculator
-            </a>
-
-            <div class="submenu">
+            <div id="gpaMenu"
+                 class="submenu"
+                 style="display: none; margin-left: 15px;">
 
                 <a onclick="showGPA()">
                     HNITEC Precision Engineering (1 Yr)
@@ -274,9 +282,15 @@
 
             </div>
 
+            <a href="buscollector.html">
+                Bus Stop Data Collector
+            </a>
+
         </div>
 
-    </aside>
+    </div>
+
+</aside>
 
 
     <!-- =========================
@@ -292,13 +306,11 @@
 
             <section id="welcome" class="welcome">
 
-                <h2>Welcome</h2>
+        <h2>Welcome</h2>
 
-                <p>
-                    Welcome. I am glad you are here. I intend to use this
-                    domain to include useful tools for students. For now,
-                    please enjoy the GPA calculator.
-                </p>
+        <p>
+        Please feel free to explore this space.
+        </p>
 
     
 
@@ -579,7 +591,42 @@
             document.getElementById("gpa").style.display = "none";
 
         }
+function toggleTools() {
 
+    const menu = document.getElementById("toolsMenu");
+    const arrow = document.getElementById("toolsArrow");
+
+    if (menu.style.display === "none") {
+
+        menu.style.display = "block";
+        arrow.textContent = "▼";
+
+    } else {
+
+        menu.style.display = "none";
+        arrow.textContent = "▶";
+
+    }
+}
+
+
+function toggleGPA() {
+
+    const menu = document.getElementById("gpaMenu");
+    const arrow = document.getElementById("gpaArrow");
+
+    if (menu.style.display === "none") {
+
+        menu.style.display = "block";
+        arrow.textContent = "▼";
+
+    } else {
+
+        menu.style.display = "none";
+        arrow.textContent = "▶";
+
+    }
+}
 
         function showAbout() {
 
