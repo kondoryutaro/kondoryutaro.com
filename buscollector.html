@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Bus Stop Data Collector</title>
+
+<style>
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 15px;
+    background: #f4f4f4;
+}
+
+h1 {
+    text-align: center;
+    font-size: 24px;
+}
+
+.section {
+    background: white;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 10px;
+}
+
+.counter {
+    text-align: center;
+    font-size: 40px;
+    font-weight: bold;
+    margin: 10px;
+}
+
+.button-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+button {
+    font-size: 22px;
+    padding: 15px 20px;
+    min-width: 70px;
+    border: none;
+    border-radius: 8px;
+    background: #ddd;
+}
+
+button:active {
+    background: #bbb;
+}
+
+.bus-button {
+    width: 30%;
+    min-width: 90px;
+}
+
+.depart-button {
+    width: 100%;
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+.active-bus {
+    border: 2px solid #ccc;
+    padding: 15px;
+    margin-top: 15px;
+    border-radius: 10px;
+}
+
+.export-button {
+    width: 100%;
+    padding: 20px;
+    font-size: 22px;
+    margin-top: 10px;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+<h1>Bus Stop Data Collection</h1>
+
+
+<div class="section">
+
+<h2>Passenger Arrivals</h2>
+
+<div id="passengerTotal" class="counter">0</div>
+
+<div class="button-row">
+
+<button onclick="changePassenger(-1)">-1</button>
+
+<button onclick="recordPassenger(1)">+1</button>
+
+<button onclick="recordPassenger(2)">+2</button>
+
+<button onclick="recordPassenger(3)">+3</button>
+
+</div>
+
+</div>
+
+
+<div class="section">
+
+<h2>Bus Arrival</h2>
+
+<div class="button-row">
+
+<button class="bus-button"
+onclick="busArrives('46')">
+Bus 46
+</button>
+
+<button class="bus-button"
+onclick="busArrives('293')">
+Bus 293
+</button>
+
+<button class="bus-button"
+onclick="busArrives('298')">
+Bus 298
+</button>
+
+</div>
+
+</div>
+
+
+<div class="section">
+
+<h2>Active Bus</h2>
+
+<div id="activeBuses">
+
+No bus currently at stop.
+
+</div>
+
+</div>
+
+
+<div class="section">
+
+<button class="export-button"
+onclick="exportPassengerCSV()">
+
+Export Passenger CSV
+
+</button>
+
+<button class="export-button"
+onclick="exportBusCSV()">
+
+Export Bus CSV
+
+</button>
+
+</div>
+
+
+<script>
+
+let passengerData = [];
+
+let busData = [];
+
+let passengerTotal = 0;
+
+let activeBuses = {};
+
+
+
+function nowString() {
+
+    let d = new Date();
+
+    return d.getFullYear() + "-" +
+
+    String(d.getMonth() + 1).padStart(2, "0") + "-" +
+
+    String(d.getDate()).padStart(2, "0") + " " +
+
+    String(d.getHours()).padStart(2, "0") + ":" +
+
+    String(d.getMinutes()).padStart(2, "0") + ":" +
+
+    String(d.getSeconds()).padStart(2, "0");
+
+}
+
+
+
+function recordPassenger(number) {
+
+    let time = nowString();
+
+    for (let i = 0; i < number; i++) {
+
+        passengerData.push(time);
+
+    }
+
+    passengerTotal += number;
+
+    updatePassengerDisplay();
+
+    saveLocal();
+
+}
+
+
+
+function changePassenger(amount) {
+
+    if (amount === -1 && passengerTotal > 0) {
+
+        passengerData.pop();
+
+        passengerTotal--;
+
+        updatePassengerDisplay();
+
+        saveLocal();
+
+    }
+
+}
+
+
+
+function updatePassengerDisplay() {
+
+    document.getElementById(
+        "passengerTotal"
+    ).innerText = passengerTotal;
+
+}
+
+
+
+function busArrives(service) {
+
+    if (activeBuses[service]) {
+
+        alert(
+            "Bus " + service +
+            " is already recorded."
+        );
+
+        return;
+
+    }
+
+    activeBuses[service] = {
+
+        arrival: nowString(),
+
+        boarded: 0,
+
+        alighted: 0
+
+    };
+
+    updateActiveBuses();
+
+    saveLocal();
+
+}
+
+
+
+function changeBusCount(
+    service,
+    category,
+    amount
+) {
+
+    let bus = activeBuses[service];
+
+    if (!bus) return;
+
+    bus[category] += amount;
+
+    if (bus[category] < 0) {
+
+        bus[category] = 0;
+
+    }
+
+    updateActiveBuses();
+
+    saveLocal();
+
+}
+
+
+
+function busDeparts(service) {
+
+    let bus = activeBuses[service];
+
+    if (!bus) return;
+
+    let departure = nowString();
+
+    let arrivalDate =
+        new Date(bus.arrival.replace(" ", "T"));
+
+    let departureDate =
+        new Date(departure.replace(" ", "T"));
+
+    let dwellSeconds =
+        Math.round(
+            (departureDate - arrivalDate) / 1000
+        );
+
+    busData.push({
+
+        service: service,
+
+        arrival: bus.arrival,
+
+        departure: departure,
+
+        dwell: dwellSeconds,
+
+        boarded: bus.boarded,
+
+        alighted: bus.alighted
+
+    });
+
+    delete activeBuses[service];
+
+    updateActiveBuses();
+
+    saveLocal();
+
+}
+
+
+
+function updateActiveBuses() {
+
+    let area =
+        document.getElementById(
+            "activeBuses"
+        );
+
+    area.innerHTML = "";
+
+    let services =
+        Object.keys(activeBuses);
+
+    if (services.length === 0) {
+
+        area.innerHTML =
+        "No bus currently at stop.";
+
+        return;
+
+    }
+
+    services.forEach(function(service) {
+
+        let bus =
+            activeBuses[service];
+
+        let box =
+            document.createElement("div");
+
+        box.className =
+            "active-bus";
+
+        box.innerHTML = `
+
+        <h3>
+        Bus ${service}
+        </h3>
+
+        <p>
+        Arrived:
+        ${bus.arrival}
+        </p>
+
+        <h3>
+        Boarded:
+        ${bus.boarded}
+        </h3>
+
+        <div class="button-row">
+
+        <button
+        onclick="changeBusCount(
+        '${service}',
+        'boarded',
+        -1)">
+        -1
+        </button>
+
+        <button
+        onclick="changeBusCount(
+        '${service}',
+        'boarded',
+        1)">
+        +1
+        </button>
+
+        <button
+        onclick="changeBusCount(
+        '${service}',
+        'boarded',
+        2)">
+        +2
+        </button>
+
+        <button
+        onclick="changeBusCount(
+        '${service}',
+        'boarded',
+        3)">
+        +3
+        </button>
+
+        </div>
+
+        <h3>
+        Alighted:
+        ${bus.alighted}
+        </h3>
+
+        <div class="button-row">
+
+        <button
+        onclick="changeBusCount(
+        '${service}',
+        'alighted',
+        -1)">
+        -1
+        </button>
+
+        <button
+        onclick="changeBusCount(
+        '${service}',
+        'alighted',
+        1)">
+        +1
+        </button>
+
+        <button
+        onclick="changeBusCount(
+        '${service}',
+        'alighted',
+        2)">
+        +2
+        </button>
+
+        <button
+        onclick="changeBusCount(
+        '${service}',
+        'alighted',
+        3)">
+        +3
+        </button>
+
+        </div>
+
+        <button
+        class="depart-button"
+        onclick="busDeparts(
+        '${service}'
+        )">
+
+        Bus ${service} Departed
+
+        </button>
+
+        `;
+
+        area.appendChild(box);
+
+    });
+
+}
+
+
+
+function downloadCSV(
+    filename,
+    content
+) {
+
+    let blob =
+        new Blob(
+            [content],
+            {type: "text/csv"}
+        );
+
+    let link =
+        document.createElement("a");
+
+    link.href =
+        URL.createObjectURL(blob);
+
+    link.download =
+        filename;
+
+    link.click();
+
+}
+
+
+
+function exportPassengerCSV() {
+
+    let csv =
+        "DateTime\n";
+
+    passengerData.forEach(
+        function(time) {
+
+            csv += time + "\n";
+
+        }
+    );
+
+    let session =
+        sessionID();
+
+    downloadCSV(
+
+        "passenger_arrivals_" +
+        session +
+        ".csv",
+
+        csv
+    );
+
+}
+
+
+
+function exportBusCSV() {
+
+    let csv =
+
+    "Service,ArrivalTime," +
+
+    "DepartureTime," +
+
+    "DwellTimeSeconds," +
+
+    "Boarded,Alighted\n";
+
+    busData.forEach(
+        function(bus) {
+
+        csv +=
+
+        bus.service + "," +
+
+        bus.arrival + "," +
+
+        bus.departure + "," +
+
+        bus.dwell + "," +
+
+        bus.boarded + "," +
+
+        bus.alighted + "\n";
+
+        }
+    );
+
+    let session =
+        sessionID();
+
+    downloadCSV(
+
+        "bus_events_" +
+        session +
+        ".csv",
+
+        csv
+    );
+
+}
+
+
+
+function sessionID() {
+
+    let d = new Date();
+
+    return (
+
+        d.getFullYear() +
+
+        String(
+            d.getMonth() + 1
+        ).padStart(2, "0") +
+
+        String(
+            d.getDate()
+        ).padStart(2, "0") +
+
+        "_" +
+
+        String(
+            d.getHours()
+        ).padStart(2, "0") +
+
+        String(
+            d.getMinutes()
+        ).padStart(2, "0")
+
+    );
+
+}
+
+
+
+function saveLocal() {
+
+    localStorage.setItem(
+
+        "passengerData",
+
+        JSON.stringify(
+            passengerData
+        )
+
+    );
+
+    localStorage.setItem(
+
+        "busData",
+
+        JSON.stringify(
+            busData
+        )
+
+    );
+
+    localStorage.setItem(
+
+        "activeBuses",
+
+        JSON.stringify(
+            activeBuses
+        )
+
+    );
+
+    localStorage.setItem(
+
+        "passengerTotal",
+
+        passengerTotal
+    );
+
+}
+
+
+
+function loadLocal() {
+
+    let p =
+        localStorage.getItem(
+            "passengerData"
+        );
+
+    let b =
+        localStorage.getItem(
+            "busData"
+        );
+
+    let a =
+        localStorage.getItem(
+            "activeBuses"
+        );
+
+    let t =
+        localStorage.getItem(
+            "passengerTotal"
+        );
+
+
+    if (p) {
+
+        passengerData =
+            JSON.parse(p);
+
+    }
+
+    if (b) {
+
+        busData =
+            JSON.parse(b);
+
+    }
+
+    if (a) {
+
+        activeBuses =
+            JSON.parse(a);
+
+    }
+
+    if (t) {
+
+        passengerTotal =
+            Number(t);
+
+    }
+
+    updatePassengerDisplay();
+
+    updateActiveBuses();
+
+}
+
+
+
+loadLocal();
+
+</script>
+
+</body>
+
+</html>
