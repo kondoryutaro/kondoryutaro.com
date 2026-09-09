@@ -281,7 +281,10 @@
                 </a>
 
             </div>
-
+            <a onclick="showQRGenerator()">
+            QR Code Generator
+            </a>
+            
             <a href="buscollector.html">
                 Bus Stop Data Collector
             </a>
@@ -569,7 +572,68 @@
                 </div>
 
             </section>
+<!-- QR CODE GENERATOR -->
 
+            <section id="qr-generator" class="welcome" style="display: none;">
+
+                <h2>QR Code Generator</h2>
+
+                <p>
+                    Enter the information to encode in the QR code and
+                    an optional name or label to display above it.
+                </p>
+
+                <br>
+
+                <label for="qrText">
+                    <strong>Text to encode:</strong>
+                </label>
+
+                <br><br>
+
+                <input
+                    type="text"
+                    id="qrText"
+                    placeholder="Example: S001"
+                    style="width: 300px; padding: 10px; font-size: 16px;"
+                >
+
+                <br><br>
+
+                <label for="qrLabel">
+                    <strong>Text above QR code:</strong>
+                </label>
+
+                <br><br>
+
+                <input
+                    type="text"
+                    id="qrLabel"
+                    placeholder="Example: Nur Fatin"
+                    style="width: 300px; padding: 10px; font-size: 16px;"
+                >
+
+                <br><br>
+
+                <button onclick="generateQR()">
+                    Generate QR Code
+                </button>
+
+                <br><br>
+
+                <canvas id="qrCanvas"></canvas>
+
+                <br>
+
+                <button
+                    id="downloadQRButton"
+                    onclick="downloadQR()"
+                    style="display: none;"
+                >
+                    Download QR Code
+                </button>
+
+            </section>
         </div>
 
     </main>
@@ -578,7 +642,8 @@
     <!-- =========================
          JAVASCRIPT
          ========================= -->
-
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>
 
 
@@ -589,6 +654,8 @@
             document.getElementById("about").style.display = "none";
 
             document.getElementById("gpa").style.display = "none";
+
+            document.getElementById("qr-generator").style.display = "none";
 
         }
 function toggleTools() {
@@ -644,7 +711,14 @@ function toggleGPA() {
             document.getElementById("gpa").style.display = "block";
 
         }
+        
+function showQRGenerator() {
 
+    hideAllPages();
+
+    document.getElementById("qr-generator").style.display = "block";
+
+}
 
         function calculateSemester1() {
 
@@ -776,6 +850,142 @@ function toggleGPA() {
                 "Potential Final Overall GPA: <strong>" +
                 finalGPA.toFixed(2) +
                 "</strong>";
+
+        }
+
+
+        function generateQR() {
+
+            const qrText =
+                document.getElementById("qrText").value.trim();
+
+            const qrLabel =
+                document.getElementById("qrLabel").value.trim();
+
+            if (qrText === "") {
+
+                alert("Please enter text to encode.");
+
+                return;
+
+            }
+
+
+            const canvas =
+                document.getElementById("qrCanvas");
+
+            const ctx =
+                canvas.getContext("2d");
+
+
+            const tempDiv =
+                document.createElement("div");
+
+            tempDiv.style.position = "absolute";
+            tempDiv.style.left = "-9999px";
+
+            document.body.appendChild(tempDiv);
+
+
+            new QRCode(tempDiv, {
+
+                text: qrText,
+                width: 300,
+                height: 300,
+                correctLevel: QRCode.CorrectLevel.H
+
+            });
+
+
+            setTimeout(function () {
+
+                const qrCanvas =
+                    tempDiv.querySelector("canvas");
+
+                const qrImage =
+                    tempDiv.querySelector("img");
+
+
+                canvas.width = 380;
+                canvas.height = 400;
+
+
+                ctx.fillStyle = "white";
+
+                ctx.fillRect(
+                    0,
+                    0,
+                    canvas.width,
+                    canvas.height
+                );
+
+
+                if (qrLabel !== "") {
+
+                    ctx.fillStyle = "black";
+
+                    ctx.font = "bold 24px Arial";
+
+                    ctx.textAlign = "center";
+
+                    ctx.fillText(
+                        qrLabel,
+                        canvas.width / 2,
+                        35
+                    );
+
+                }
+
+
+                if (qrCanvas) {
+
+                    ctx.drawImage(
+                        qrCanvas,
+                        40,
+                        65,
+                        300,
+                        300
+                    );
+
+                    finishQR();
+
+                }
+
+                else if (qrImage) {
+
+                    const img = new Image();
+
+                    img.onload = function () {
+
+                        ctx.drawImage(
+                            img,
+                            40,
+                            65,
+                            300,
+                            300
+                        );
+
+                        finishQR();
+
+                    };
+
+                    img.src = qrImage.src;
+
+                }
+
+
+                tempDiv.remove();
+
+            }, 100);
+
+        }
+
+
+        function finishQR() {
+
+            document.getElementById(
+                "downloadQRButton"
+            ).style.display = "inline-block";
 
         }
 
