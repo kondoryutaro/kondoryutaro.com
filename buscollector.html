@@ -100,6 +100,27 @@ button:active {
     margin-top: 3px;
 }
 
+
+.waiting-status {
+    text-align: center;
+    font-size: 12px;
+    margin: 4px 0 6px 0;
+    font-weight: bold;
+}
+
+.waiting-recorded {
+    text-align: center;
+    font-size: 11px;
+    margin-top: 5px;
+}
+
+.timer-button {
+    width: 100%;
+    margin-top: 6px;
+    padding: 8px;
+    font-weight: bold;
+}
+
 </style>
 
 </head>
@@ -170,6 +191,47 @@ No bus currently at stop.
 </div>
 
 
+
+<div class="section">
+
+<h2>Waiting Passenger Count</h2>
+
+<p>Count everyone currently waiting at the bus stop, then press Record Count.</p>
+
+<div id="waitingCount" class="counter">0</div>
+
+<div class="button-row">
+
+<button onclick="changeWaitingCount(-5)">-5</button>
+
+<button onclick="changeWaitingCount(-1)">-1</button>
+
+<button onclick="changeWaitingCount(1)">+1</button>
+
+<button onclick="changeWaitingCount(5)">+5</button>
+
+</div>
+
+<button class="depart-button"
+onclick="recordWaitingCount()">
+Record Count
+</button>
+
+<div id="waitingTimer" class="waiting-status">
+5-minute reminder not started.
+</div>
+
+<button class="timer-button"
+onclick="startWaitingTimer()">
+Start / Restart 5-Min Reminder
+</button>
+
+<div id="lastWaitingRecord" class="waiting-recorded">
+No waiting count recorded yet.
+</div>
+
+</div>
+
 <div class="section">
 
 <button class="export-button"
@@ -183,6 +245,14 @@ Export Passenger CSV
 onclick="exportBusCSV()">
 
 Export Bus CSV
+
+</button>
+
+
+<button class="export-button"
+onclick="exportWaitingCSV()">
+
+Export Waiting Count CSV
 
 </button>
 
@@ -205,6 +275,14 @@ let busData = [];
 let passengerTotal = 0;
 
 let activeBuses = {};
+
+let waitingData = [];
+
+let waitingCount = 0;
+
+let waitingTimerDue = null;
+
+let waitingReminderShownFor = null;
 
 
 
@@ -542,6 +620,170 @@ function updateActiveBuses() {
 
 
 
+
+function updateWaitingDisplay() {
+
+    document.getElementById(
+        "waitingCount"
+    ).innerText = waitingCount;
+
+    let last =
+        document.getElementById(
+            "lastWaitingRecord"
+        );
+
+    if (waitingData.length === 0) {
+
+        last.innerText =
+            "No waiting count recorded yet.";
+
+    } else {
+
+        let latest =
+            waitingData[
+                waitingData.length - 1
+            ];
+
+        last.innerText =
+            "Last recorded: " +
+            latest.count +
+            " at " +
+            latest.time;
+    }
+
+}
+
+
+function changeWaitingCount(amount) {
+
+    waitingCount += amount;
+
+    if (waitingCount < 0) {
+
+        waitingCount = 0;
+    }
+
+    updateWaitingDisplay();
+
+    saveLocal();
+
+}
+
+
+function recordWaitingCount() {
+
+    waitingData.push({
+
+        time: nowString(),
+
+        count: waitingCount
+
+    });
+
+    updateWaitingDisplay();
+
+    saveLocal();
+
+}
+
+
+function startWaitingTimer() {
+
+    waitingTimerDue =
+        Date.now() + 5 * 60 * 1000;
+
+    waitingReminderShownFor = null;
+
+    saveLocal();
+
+    updateWaitingTimer();
+
+}
+
+
+function updateWaitingTimer() {
+
+    let area =
+        document.getElementById(
+            "waitingTimer"
+        );
+
+    if (!waitingTimerDue) {
+
+        area.innerText =
+            "5-minute reminder not started.";
+
+        return;
+    }
+
+    let remaining =
+        waitingTimerDue - Date.now();
+
+    if (remaining <= 0) {
+
+        area.innerText =
+            "COUNT NOW";
+
+        if (
+            waitingReminderShownFor !==
+            waitingTimerDue
+        ) {
+
+            waitingReminderShownFor =
+                waitingTimerDue;
+
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200]);
+            }
+
+            alert(
+                "5-minute reminder: count the people currently waiting at the bus stop."
+            );
+        }
+
+        while (
+            waitingTimerDue <= Date.now()
+        ) {
+
+            waitingTimerDue +=
+                5 * 60 * 1000;
+        }
+
+        waitingReminderShownFor = null;
+
+        saveLocal();
+
+        return;
+    }
+
+    let totalSeconds =
+        Math.ceil(
+            remaining / 1000
+        );
+
+    let minutes =
+        Math.floor(
+            totalSeconds / 60
+        );
+
+    let seconds =
+        totalSeconds % 60;
+
+    area.innerText =
+        "Next count in: " +
+        String(minutes).padStart(2, "0") +
+        ":" +
+        String(seconds).padStart(2, "0");
+
+}
+
+
+setInterval(
+    updateWaitingTimer,
+    1000
+);
+
+
 function downloadCSV(
     filename,
     content
@@ -646,6 +888,37 @@ function exportBusCSV() {
 
 
 
+
+function exportWaitingCSV() {
+
+    let csv =
+        "DateTime,WaitingPassengers\n";
+
+    waitingData.forEach(
+        function(record) {
+
+            csv +=
+                record.time + "," +
+                record.count + "\n";
+
+        }
+    );
+
+    let session =
+        sessionID();
+
+    downloadCSV(
+
+        "waiting_counts_" +
+        session +
+        ".csv",
+
+        csv
+    );
+
+}
+
+
 function sessionID() {
 
     let d = new Date();
@@ -717,6 +990,32 @@ function saveLocal() {
         passengerTotal
     );
 
+    localStorage.setItem(
+
+        "waitingData",
+
+        JSON.stringify(
+            waitingData
+        )
+
+    );
+
+    localStorage.setItem(
+
+        "waitingCount",
+
+        waitingCount
+    );
+
+    localStorage.setItem(
+
+        "waitingTimerDue",
+
+        waitingTimerDue === null
+        ? ""
+        : waitingTimerDue
+    );
+
 }
 
 
@@ -741,6 +1040,21 @@ function loadLocal() {
     let t =
         localStorage.getItem(
             "passengerTotal"
+        );
+
+    let w =
+        localStorage.getItem(
+            "waitingData"
+        );
+
+    let wc =
+        localStorage.getItem(
+            "waitingCount"
+        );
+
+    let wtd =
+        localStorage.getItem(
+            "waitingTimerDue"
         );
 
 
@@ -772,16 +1086,41 @@ function loadLocal() {
 
     }
 
+    if (w) {
+
+        waitingData =
+            JSON.parse(w);
+
+    }
+
+    if (wc) {
+
+        waitingCount =
+            Number(wc);
+
+    }
+
+    if (wtd) {
+
+        waitingTimerDue =
+            Number(wtd);
+
+    }
+
     updatePassengerDisplay();
 
     updateActiveBuses();
+
+    updateWaitingDisplay();
+
+    updateWaitingTimer();
 
 }
 
 function resetSession() {
 
     let answer = confirm(
-        "Clear all current passenger and bus data?"
+        "Clear all current passenger, bus, and waiting-count data?"
     );
 
     if (!answer) return;
@@ -790,14 +1129,23 @@ function resetSession() {
     busData = [];
     activeBuses = {};
     passengerTotal = 0;
+    waitingData = [];
+    waitingCount = 0;
+    waitingTimerDue = null;
+    waitingReminderShownFor = null;
 
     localStorage.removeItem("passengerData");
     localStorage.removeItem("busData");
     localStorage.removeItem("activeBuses");
     localStorage.removeItem("passengerTotal");
+    localStorage.removeItem("waitingData");
+    localStorage.removeItem("waitingCount");
+    localStorage.removeItem("waitingTimerDue");
 
     updatePassengerDisplay();
     updateActiveBuses();
+    updateWaitingDisplay();
+    updateWaitingTimer();
 
     alert("New session started.");
 }
