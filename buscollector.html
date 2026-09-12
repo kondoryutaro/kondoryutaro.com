@@ -1,265 +1,3 @@
-this is the analysis pallet
-
-Yes — I think that would be useful, especially for your simulation project.
-
-Right now your collector captures flows reasonably well:
-
-passenger arrivals
-bus arrivals/departures
-number boarding
-number alighting
-
-But what it does not directly capture is the state of the queue at a moment in time.
-
-Adding a regular manual count such as:
-
-“How many people are currently waiting at the bus stop?”
-
-every 5 or 10 minutes would give you an extra validation variable.
-
-For example:
-
-09:00  Waiting passengers = 12
-09:05  Waiting passengers = 18
-09:10  Waiting passengers = 7
-09:15  Waiting passengers = 21
-
-That is valuable because later your AnyLogic model will produce exactly this kind of output:
-
-Queue size versus time
-
-You could then compare:
-
-Observed queue size
-vs
-Simulated queue size
-
-That gives you a much stronger validation argument than only saying the simulated arrival rate looks similar to the observed arrival rate.
-
-I would probably add a small section to buscollector.html like:
-
-WAITING PASSENGER COUNT
-
-Current count:
-[ -1 ]   17   [ +1 ]
-
-[ Record Count ]
-
-When you press Record Count, save something like:
-
-DateTime,WaitingPassengers
-2026-09-12 09:00:00.000,17
-2026-09-12 09:05:01.240,22
-2026-09-12 09:10:00.880,9
-
-I would not make the website automatically save a count every five minutes, because the website cannot know how many people are physically there. Instead, it could give you a reminder every five minutes:
-
-Time to count waiting passengers
-
-and you enter the number you see.
-
-For your fieldwork, 5-minute intervals seems like a good starting point. It gives enough observations to show how the queue changes without forcing you to constantly stop what you're doing.
-
-There is also a nice research benefit: if your simulated queue rises and falls in a similar pattern to these observed counts, you can say the model was validated not only against passenger arrivals and bus headways, but also against observed queue length over time.
-
-So yes — I would add this. It is probably one of the more worthwhile additions to the collector for the AnyLogic project.
-
-okay shall we
-
-Yes. I suggest we add it to buscollector.html, but keep it simple:
-
-Waiting Passenger Count
-
-Current waiting count:  0
-
-[ −1 ]   [ +1 ]   [ +5 ]
-
-[ Record Count ]
-
-Next count in: 04:32
-
-Every 5 minutes, the page can alert you that it's time to make an observation. You visually count everyone currently waiting, adjust the number using the buttons, and press Record Count.
-
-Each press would save:
-
-DateTime,WaitingPassengers
-2026-09-12 09:00:02.315,14
-2026-09-12 09:05:07.821,19
-2026-09-12 09:10:03.442,8
-
-I'd also make the recorded observations exportable as a separate:
-
-waiting_counts.csv
-
-That will make it very easy later to compare the field observations against the AnyLogic queue-size plot.
-
-Since this modifies your existing buscollector.html, send me your current buscollector.html file rather than having me reconstruct it from our earlier versions. I'll modify that exact version so we don't accidentally remove any of the features you've already added.
-
-Pasted text(4).txt
-Document
-Here you go
-Pasted text(5).txt
-Document
-Here you go
-
-I’ve updated your current buscollector.html version to add the waiting-passenger observation feature. Your existing passenger and bus recording logic has been preserved from the file you sent.
-
-The new version adds:
-
-a Waiting Passenger Count section
--5, -1, +1, +5 adjustment buttons
-a Record Count button
-a 5-minute reminder timer
-localStorage persistence, so refreshes do not wipe the waiting-count data
-a separate Waiting Count CSV export
-waiting-count data included in Reset / New Session
-
-The CSV format is:
-
-DateTime,WaitingPassengers
-2026-09-12 09:00:02.315,14
-2026-09-12 09:05:06.821,19
-
-You can replace your existing buscollector.html with this file:
-
-Download the updated buscollector.html
-
-One design choice I made deliberately: the 5-minute timer only reminds you to count; it does not automatically save a value, because only you can observe the actual number of people physically waiting. 
-
-buscollector_with_waiting_counts.html
-HTML
-
-The main value of a snapshot queue count is validation. It gives you a real-world number that you can compare against what AnyLogic says should be happening at approximately the same time.
-
-For example, suppose during your field observation you record:
-
-Time	Actual people waiting
-9:00	8
-9:30	14
-10:00	21
-10:30	11
-11:00	16
-
-You then run your AnyLogic model using the passenger-arrival and bus-headway distributions derived from your collected data. At those same times, perhaps the model gives:
-
-Time	Observed	Simulation
-9:00	8	9
-9:30	14	13
-10:00	21	19
-10:30	11	12
-11:00	16	15
-
-That would give you evidence that the model is reproducing the actual queue behaviour, not merely generating plausible passenger arrivals.
-
-There is an important issue with your model, though. You currently have three separate queues:
-
-Bus 46 queue
-Bus 293 queue
-Bus 298 queue
-
-But when you physically look at the bus stop, you generally cannot tell which bus each person is waiting for. So a snapshot of 21 people means:
-
-$$ Q_{46}+Q_{293}+Q_{298}\approx21 $$
-
-You would compare the physical headcount with the sum of the three simulated queues, not with one individual queue.
-
-And this actually gives the snapshot count a nice purpose. Imagine your simulation predicts:
-
-Q46  = 7
-Q293 = 9
-Q298 = 5
---------------
-Total = 21
-
-and you observed 22 people waiting. That's reasonably close.
-
-But there's a bigger point
-
-Thinking about your question more carefully, I wouldn't make snapshot counts a major part of your data collection either.
-
-Your existing data can already provide a form of flow balance. You know how many passengers arrive at the stop, and you record how many passengers board buses. Therefore, approximately:
-
-$$ Q(t)=Q(0)+\text{cumulative arrivals}-\text{cumulative boardings} $$
-
-A few physical headcounts can act as a sanity check on that calculation.
-
-For example, you start at 9:00 and physically count 10 people waiting. Between 9:00 and 9:30:
-
-45 new passengers arrive
-39 passengers board buses
-
-Then your estimated queue at 9:30 is:
-
-$$ 10+45-39=16 $$
-
-If you physically count about 15–17 people at 9:30, that gives you confidence that your arrival and boarding observations are reasonably complete.
-
-If instead you count 28, that's useful too—it tells you something is missing from your accounting.
-
-So I see snapshot counts as occasional cross-checks, not another primary dataset.
-
-For your 9–11 AM observations, I might simply record the queue at the beginning and end, with perhaps one or two intermediate snapshots if it isn't distracting. Your attention is probably better spent accurately pressing the passenger-arrival and bus boarding/alighting buttons than trying to do a full headcount every five minutes.
-
-say I do not record the queue number every 5 min, how would I validate the model
-
-You can still validate it without a 5-minute queue count. You would just validate against the other observed outputs from the real bus stop.
-
-The key idea is: you do not need to validate every internal variable in the model. You need to show that the model reproduces important real-world behaviour reasonably well.
-
-For your case, I would validate using three things:
-
-Passenger arrivals — compare observed passenger arrival rate/interarrival distribution with the simulation.
-Bus arrivals/headways — compare observed bus headways for 46, 293 and 298 with the simulation.
-Boarding counts — compare how many passengers board each service over a fixed period, such as 9–10 AM or 9–11 AM.
-
-For example, suppose your real observations for 9–10 AM are:
-
-Observed passenger arrivals: 82
-Observed Bus 46 boardings: 31
-Observed Bus 293 boardings: 28
-Observed Bus 298 boardings: 23
-
-Then after running the model several times, maybe the simulation averages:
-
-Simulated passenger arrivals: 79
-Simulated Bus 46 boardings: 33
-Simulated Bus 293 boardings: 27
-Simulated Bus 298 boardings: 21
-
-Those are reasonably close, so you can argue that the model reproduces the real system behaviour at a useful level.
-
-You can also compare average bus headway. For instance:
-
-Observed Bus 46 mean headway = 9.8 min
-Simulated Bus 46 mean headway = 10.1 min
-
-That is another validation check.
-
-The one thing you cannot validate strongly without queue observations is the actual number of people waiting at each moment. But that does not make the whole model invalid. It just means queue-length validation is weaker.
-
-For your project, I think a sensible validation section would be:
-
-1. Passenger arrival behaviour
-2. Bus headway behaviour
-3. Boarding totals by service
-4. Possibly dwell time
-
-Then queue length and waiting time become model outputs that are inferred from the validated model.
-
-That is actually quite common in simulation studies: some outputs are directly validated, while others are generated by a model whose inputs and major behaviours have already been checked.
-
-So no, I would not say you must collect queue count every 5 minutes. If your fieldwork burden is already high, your current data is enough to build a defensible validation approach.
-
-okay lets remove it
-
-Yes. In that case, keep your current buscollector.html without the waiting-count feature.
-
-The version you originally sent already has the main data you need: passenger arrivals, bus arrivals/departures, dwell time, boarded passengers, and alighted passengers.
-
-For your project, I think that is cleaner. You can validate the model using passenger-arrival behaviour, bus headways, boarding totals by service, and dwell times, without adding another manual task during field collection.
-
-So I would stick with your original file and ignore the modified version I created.
-
 <!DOCTYPE html>
 
 <html lang="en">
@@ -268,11 +6,102 @@ So I would stick with your original file and ignore the modified version I creat
 
 <meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
 
 <title>Bus Stop Data Collector</title>
 
-<style> body { font-family: Arial, sans-serif; margin: 0; padding: 6px; background: #f4f4f4; font-size: 13px; } h1 { text-align: center; font-size: 17px; margin: 5px 0 8px 0; } h2 { font-size: 14px; margin: 3px 0 6px 0; } h3 { font-size: 13px; margin: 4px 0; } p { font-size: 11px; margin: 3px 0; } .section { background: white; padding: 7px; margin-bottom: 6px; border-radius: 6px; } .counter { text-align: center; font-size: 24px; font-weight: bold; margin: 3px; } .button-row { display: flex; gap: 4px; justify-content: center; } button { font-size: 14px; padding: 8px 10px; min-width: 50px; border: none; border-radius: 5px; background: #ddd; } button:active { background: #bbb; } .bus-button { flex: 1; min-width: 0; } .depart-button { width: 100%; margin-top: 6px; padding: 9px; font-weight: bold; } .active-bus { border: 1px solid #ccc; padding: 6px; margin-top: 5px; border-radius: 5px; } .export-button { width: 49%; padding: 8px; font-size: 12px; margin-top: 3px; } </style>
+<style>
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 6px;
+    background: #f4f4f4;
+    font-size: 13px;
+}
+
+h1 {
+    text-align: center;
+    font-size: 17px;
+    margin: 5px 0 8px 0;
+}
+
+h2 {
+    font-size: 14px;
+    margin: 3px 0 6px 0;
+}
+
+h3 {
+    font-size: 13px;
+    margin: 4px 0;
+}
+
+p {
+    font-size: 11px;
+    margin: 3px 0;
+}
+
+.section {
+    background: white;
+    padding: 7px;
+    margin-bottom: 6px;
+    border-radius: 6px;
+}
+
+.counter {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin: 3px;
+}
+
+.button-row {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+}
+
+button {
+    font-size: 14px;
+    padding: 8px 10px;
+    min-width: 50px;
+    border: none;
+    border-radius: 5px;
+    background: #ddd;
+}
+
+button:active {
+    background: #bbb;
+}
+
+.bus-button {
+    flex: 1;
+    min-width: 0;
+}
+
+.depart-button {
+    width: 100%;
+    margin-top: 6px;
+    padding: 9px;
+    font-weight: bold;
+}
+
+.active-bus {
+    border: 1px solid #ccc;
+    padding: 6px;
+    margin-top: 5px;
+    border-radius: 5px;
+}
+
+.export-button {
+    width: 49%;
+    padding: 8px;
+    font-size: 12px;
+    margin-top: 3px;
+}
+
+</style>
 
 </head>
 
@@ -306,15 +135,18 @@ So I would stick with your original file and ignore the modified version I creat
 
 <div class="button-row">
 
-<button class="bus-button" onclick="busArrives('46')">
+<button class="bus-button"
+onclick="busArrives('46')">
 Bus 46
 </button>
 
-<button class="bus-button" onclick="busArrives('293')">
+<button class="bus-button"
+onclick="busArrives('293')">
 Bus 293
 </button>
 
-<button class="bus-button" onclick="busArrives('298')">
+<button class="bus-button"
+onclick="busArrives('298')">
 Bus 298
 </button>
 
@@ -336,19 +168,22 @@ No bus currently at stop.
 
 <div class="section">
 
-<button class="export-button" onclick="exportPassengerCSV()">
+<button class="export-button"
+onclick="exportPassengerCSV()">
 
 Export Passenger CSV
 
 </button>
 
-<button class="export-button" onclick="exportBusCSV()">
+<button class="export-button"
+onclick="exportBusCSV()">
 
 Export Bus CSV
 
 </button>
 
-<button class="export-button" onclick="resetSession()">
+<button class="export-button"
+onclick="resetSession()">
 
 Reset / New Session
 
@@ -356,10 +191,617 @@ Reset / New Session
 
 </div>
 
-<script> let passengerData = []; let busData = []; let passengerTotal = 0; let activeBuses = {}; function nowString() { let d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0") + " " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0") + ":" + String(d.getSeconds()).padStart(2, "0") + "." + String(d.getMilliseconds()).padStart(3, "0"); } function recordPassenger(number) { let time = nowString(); let currentTime = new Date(time.replace(" ", "T")); for (let i = 0; i < number; i++) { let interarrival = ""; if (passengerData.length > 0) { let previousTime = new Date( passengerData[ passengerData.length - 1 ].time.replace(" ", "T") ); interarrival = ((currentTime - previousTime) / 1000) .toFixed(3); } passengerData.push({ time: time, interarrival: interarrival }); } passengerTotal += number; updatePassengerDisplay(); saveLocal(); } function changePassenger(amount) { if (amount === -1 && passengerTotal > 0) { passengerData.pop(); passengerTotal--; updatePassengerDisplay(); saveLocal(); } } function updatePassengerDisplay() { document.getElementById( "passengerTotal" ).innerText = passengerTotal; } function busArrives(service) { if (activeBuses[service]) { alert( "Bus " + service + " is already recorded." ); return; } activeBuses[service] = { arrival: nowString(), boarded: 0, alighted: 0 }; updateActiveBuses(); saveLocal(); } function changeBusCount( service, category, amount ) { let bus = activeBuses[service]; if (!bus) return; bus[category] += amount; if (bus[category] < 0) { bus[category] = 0; } updateActiveBuses(); saveLocal(); } function busDeparts(service) { let bus = activeBuses[service]; if (!bus) return; let departure = nowString(); let arrivalDate = new Date(bus.arrival.replace(" ", "T")); let departureDate = new Date(departure.replace(" ", "T")); let dwellSeconds = (departureDate - arrivalDate) / 1000; busData.push({ service: service, arrival: bus.arrival, departure: departure, dwell: dwellSeconds, boarded: bus.boarded, alighted: bus.alighted }); delete activeBuses[service]; updateActiveBuses(); saveLocal(); } function updateActiveBuses() { let area = document.getElementById( "activeBuses" ); area.innerHTML = ""; let services = Object.keys(activeBuses); if (services.length === 0) { area.innerHTML = "No bus currently at stop."; return; } services.forEach(function(service) { let bus = activeBuses[service]; let box = document.createElement("div"); box.className = "active-bus"; box.innerHTML = ` <h3> Bus ${service} </h3> <p> Arrived: ${bus.arrival} </p> <h3> Boarded: ${bus.boarded} </h3> <div class="button-row"> <button onclick="changeBusCount( '${service}', 'boarded', -1)"> -1 </button> <button onclick="changeBusCount( '${service}', 'boarded', 1)"> +1 </button> <button onclick="changeBusCount( '${service}', 'boarded', 2)"> +2 </button> <button onclick="changeBusCount( '${service}', 'boarded', 3)"> +3 </button> </div> <h3> Alighted: ${bus.alighted} </h3> <div class="button-row"> <button onclick="changeBusCount( '${service}', 'alighted', -1)"> -1 </button> <button onclick="changeBusCount( '${service}', 'alighted', 1)"> +1 </button> <button onclick="changeBusCount( '${service}', 'alighted', 2)"> +2 </button> <button onclick="changeBusCount( '${service}', 'alighted', 3)"> +3 </button> </div> <button class="depart-button" onclick="busDeparts( '${service}' )"> Bus ${service} Departed </button> `; area.appendChild(box); }); } function downloadCSV( filename, content ) { let blob = new Blob( [content], {type: "text/csv"} ); let link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = filename; link.click(); } function exportPassengerCSV() { let csv = "DateTime,InterarrivalTimeSeconds\n"; passengerData.forEach( function(passenger) { csv += passenger.time + "," + passenger.interarrival + "\n"; } ); let session = sessionID(); downloadCSV( "passenger_arrivals_" + session + ".csv", csv ); } function exportBusCSV() { let csv = "Service,ArrivalTime," + "DepartureTime," + "DwellTimeSeconds," + "Boarded,Alighted\n"; busData.forEach( function(bus) { csv += bus.service + "," + bus.arrival + "," + bus.departure + "," + bus.dwell + "," + bus.boarded + "," + bus.alighted + "\n"; } ); let session = sessionID(); downloadCSV( "bus_events_" + session + ".csv", csv ); } function sessionID() { let d = new Date(); return ( d.getFullYear() + String( d.getMonth() + 1 ).padStart(2, "0") + String( d.getDate() ).padStart(2, "0") + "_" + String( d.getHours() ).padStart(2, "0") + String( d.getMinutes() ).padStart(2, "0") ); } function saveLocal() { localStorage.setItem( "passengerData", JSON.stringify( passengerData ) ); localStorage.setItem( "busData", JSON.stringify( busData ) ); localStorage.setItem( "activeBuses", JSON.stringify( activeBuses ) ); localStorage.setItem( "passengerTotal", passengerTotal ); } function loadLocal() { let p = localStorage.getItem( "passengerData" ); let b = localStorage.getItem( "busData" ); let a = localStorage.getItem( "activeBuses" ); let t = localStorage.getItem( "passengerTotal" ); if (p) { passengerData = JSON.parse(p); } if (b) { busData = JSON.parse(b); } if (a) { activeBuses = JSON.parse(a); } if (t) { passengerTotal = Number(t); } updatePassengerDisplay(); updateActiveBuses(); } function resetSession() { let answer = confirm( "Clear all current passenger and bus data?" ); if (!answer) return; passengerData = []; busData = []; activeBuses = {}; passengerTotal = 0; localStorage.removeItem("passengerData"); localStorage.removeItem("busData"); localStorage.removeItem("activeBuses"); localStorage.removeItem("passengerTotal"); updatePassengerDisplay(); updateActiveBuses(); alert("New session started."); } loadLocal(); </script>
+<script>
+
+let passengerData = [];
+
+let busData = [];
+
+let passengerTotal = 0;
+
+let activeBuses = {};
+
+
+
+function nowString() {
+
+    let d = new Date();
+
+    return d.getFullYear() + "-" +
+
+    String(d.getMonth() + 1).padStart(2, "0") + "-" +
+
+    String(d.getDate()).padStart(2, "0") + " " +
+
+    String(d.getHours()).padStart(2, "0") + ":" +
+
+    String(d.getMinutes()).padStart(2, "0") + ":" +
+
+    String(d.getSeconds()).padStart(2, "0") + "." +
+
+    String(d.getMilliseconds()).padStart(3, "0");
+
+}
+
+
+
+function recordPassenger(number) {
+
+    let time = nowString();
+    let currentTime = new Date(time.replace(" ", "T"));
+
+    for (let i = 0; i < number; i++) {
+
+        let interarrival = "";
+
+        if (passengerData.length > 0) {
+
+            let previousTime =
+                new Date(
+                    passengerData[
+                        passengerData.length - 1
+                    ].time.replace(" ", "T")
+                );
+
+            interarrival =
+                ((currentTime - previousTime) / 1000)
+                .toFixed(3);
+        }
+
+        passengerData.push({
+            time: time,
+            interarrival: interarrival
+        });
+
+    }
+
+    passengerTotal += number;
+
+    updatePassengerDisplay();
+
+    saveLocal();
+}
+
+
+
+function changePassenger(amount) {
+
+    if (amount === -1 && passengerTotal > 0) {
+
+        passengerData.pop();
+
+        passengerTotal--;
+
+        updatePassengerDisplay();
+
+        saveLocal();
+
+    }
+
+}
+
+
+
+function updatePassengerDisplay() {
+
+    document.getElementById(
+        "passengerTotal"
+    ).innerText = passengerTotal;
+
+}
+
+
+
+function busArrives(service) {
+
+    if (activeBuses[service]) {
+
+        alert(
+            "Bus " + service +
+            " is already recorded."
+        );
+
+        return;
+
+    }
+
+    activeBuses[service] = {
+
+        arrival: nowString(),
+
+        boarded: 0,
+
+        alighted: 0
+
+    };
+
+    updateActiveBuses();
+
+    saveLocal();
+
+}
+
+
+
+function changeBusCount(
+    service,
+    category,
+    amount
+) {
+
+    let bus = activeBuses[service];
+
+    if (!bus) return;
+
+    bus[category] += amount;
+
+    if (bus[category] < 0) {
+
+        bus[category] = 0;
+
+    }
+
+    updateActiveBuses();
+
+    saveLocal();
+
+}
+
+
+
+function busDeparts(service) {
+
+    let bus = activeBuses[service];
+
+    if (!bus) return;
+
+    let departure = nowString();
+
+    let arrivalDate =
+        new Date(bus.arrival.replace(" ", "T"));
+
+    let departureDate =
+        new Date(departure.replace(" ", "T"));
+
+    let dwellSeconds =
+        (departureDate - arrivalDate) / 1000;
+
+    busData.push({
+
+        service: service,
+
+        arrival: bus.arrival,
+
+        departure: departure,
+
+        dwell: dwellSeconds,
+
+        boarded: bus.boarded,
+
+        alighted: bus.alighted
+
+    });
+
+    delete activeBuses[service];
+
+    updateActiveBuses();
+
+    saveLocal();
+
+}
+
+
+
+function updateActiveBuses() {
+
+    let area =
+        document.getElementById(
+            "activeBuses"
+        );
+
+    area.innerHTML = "";
+
+    let services =
+        Object.keys(activeBuses);
+
+    if (services.length === 0) {
+
+        area.innerHTML =
+        "No bus currently at stop.";
+
+        return;
+
+    }
+
+    services.forEach(function(service) {
+
+        let bus =
+            activeBuses[service];
+
+        let box =
+            document.createElement("div");
+
+        box.className =
+            "active-bus";
+
+        box.innerHTML = `
+
+        <h3>
+        Bus ${service}
+        </h3>
+
+        <p>
+        Arrived:
+        ${bus.arrival}
+        </p>
+
+        <h3>
+        Boarded:
+        ${bus.boarded}
+        </h3>
+
+        <div class="button-row">
+
+        <button
+        onclick="changeBusCount(
+        '${service}',
+        'boarded',
+        -1)">
+        -1
+        </button>
+
+        <button
+        onclick="changeBusCount(
+        '${service}',
+        'boarded',
+        1)">
+        +1
+        </button>
+
+        <button
+        onclick="changeBusCount(
+        '${service}',
+        'boarded',
+        2)">
+        +2
+        </button>
+
+        <button
+        onclick="changeBusCount(
+        '${service}',
+        'boarded',
+        3)">
+        +3
+        </button>
+
+        </div>
+
+        <h3>
+        Alighted:
+        ${bus.alighted}
+        </h3>
+
+        <div class="button-row">
+
+        <button
+        onclick="changeBusCount(
+        '${service}',
+        'alighted',
+        -1)">
+        -1
+        </button>
+
+        <button
+        onclick="changeBusCount(
+        '${service}',
+        'alighted',
+        1)">
+        +1
+        </button>
+
+        <button
+        onclick="changeBusCount(
+        '${service}',
+        'alighted',
+        2)">
+        +2
+        </button>
+
+        <button
+        onclick="changeBusCount(
+        '${service}',
+        'alighted',
+        3)">
+        +3
+        </button>
+
+        </div>
+
+        <button
+        class="depart-button"
+        onclick="busDeparts(
+        '${service}'
+        )">
+
+        Bus ${service} Departed
+
+        </button>
+
+        `;
+
+        area.appendChild(box);
+
+    });
+
+}
+
+
+
+function downloadCSV(
+    filename,
+    content
+) {
+
+    let blob =
+        new Blob(
+            [content],
+            {type: "text/csv"}
+        );
+
+    let link =
+        document.createElement("a");
+
+    link.href =
+        URL.createObjectURL(blob);
+
+    link.download =
+        filename;
+
+    link.click();
+
+}
+
+
+
+function exportPassengerCSV() {
+
+    let csv =
+        "DateTime,InterarrivalTimeSeconds\n";
+
+    passengerData.forEach(
+        function(passenger) {
+
+            csv +=
+                passenger.time + "," +
+                passenger.interarrival + "\n";
+
+        }
+    );
+
+    let session =
+        sessionID();
+
+    downloadCSV(
+
+        "passenger_arrivals_" +
+        session +
+        ".csv",
+
+        csv
+    );
+}
+
+
+
+function exportBusCSV() {
+
+    let csv =
+
+    "Service,ArrivalTime," +
+
+    "DepartureTime," +
+
+    "DwellTimeSeconds," +
+
+    "Boarded,Alighted\n";
+
+    busData.forEach(
+        function(bus) {
+
+        csv +=
+
+        bus.service + "," +
+
+        bus.arrival + "," +
+
+        bus.departure + "," +
+
+        bus.dwell + "," +
+
+        bus.boarded + "," +
+
+        bus.alighted + "\n";
+
+        }
+    );
+
+    let session =
+        sessionID();
+
+    downloadCSV(
+
+        "bus_events_" +
+        session +
+        ".csv",
+
+        csv
+    );
+
+}
+
+
+
+function sessionID() {
+
+    let d = new Date();
+
+    return (
+
+        d.getFullYear() +
+
+        String(
+            d.getMonth() + 1
+        ).padStart(2, "0") +
+
+        String(
+            d.getDate()
+        ).padStart(2, "0") +
+
+        "_" +
+
+        String(
+            d.getHours()
+        ).padStart(2, "0") +
+
+        String(
+            d.getMinutes()
+        ).padStart(2, "0")
+
+    );
+
+}
+
+
+
+function saveLocal() {
+
+    localStorage.setItem(
+
+        "passengerData",
+
+        JSON.stringify(
+            passengerData
+        )
+
+    );
+
+    localStorage.setItem(
+
+        "busData",
+
+        JSON.stringify(
+            busData
+        )
+
+    );
+
+    localStorage.setItem(
+
+        "activeBuses",
+
+        JSON.stringify(
+            activeBuses
+        )
+
+    );
+
+    localStorage.setItem(
+
+        "passengerTotal",
+
+        passengerTotal
+    );
+
+}
+
+
+
+function loadLocal() {
+
+    let p =
+        localStorage.getItem(
+            "passengerData"
+        );
+
+    let b =
+        localStorage.getItem(
+            "busData"
+        );
+
+    let a =
+        localStorage.getItem(
+            "activeBuses"
+        );
+
+    let t =
+        localStorage.getItem(
+            "passengerTotal"
+        );
+
+
+    if (p) {
+
+        passengerData =
+            JSON.parse(p);
+
+    }
+
+    if (b) {
+
+        busData =
+            JSON.parse(b);
+
+    }
+
+    if (a) {
+
+        activeBuses =
+            JSON.parse(a);
+
+    }
+
+    if (t) {
+
+        passengerTotal =
+            Number(t);
+
+    }
+
+    updatePassengerDisplay();
+
+    updateActiveBuses();
+
+}
+
+function resetSession() {
+
+    let answer = confirm(
+        "Clear all current passenger and bus data?"
+    );
+
+    if (!answer) return;
+
+    passengerData = [];
+    busData = [];
+    activeBuses = {};
+    passengerTotal = 0;
+
+    localStorage.removeItem("passengerData");
+    localStorage.removeItem("busData");
+    localStorage.removeItem("activeBuses");
+    localStorage.removeItem("passengerTotal");
+
+    updatePassengerDisplay();
+    updateActiveBuses();
+
+    alert("New session started.");
+}
+
+
+loadLocal();
+
+</script>
 
 </body>
 
 </html>
-
-Close
