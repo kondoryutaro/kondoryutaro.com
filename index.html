@@ -191,6 +191,53 @@
 
 
         /* =========================
+           GENERIC GPA CALCULATOR
+           ========================= */
+
+        .generic-module-row {
+            display: grid;
+            grid-template-columns: 1fr 140px 140px 100px;
+            gap: 12px;
+            align-items: end;
+            padding: 15px;
+            margin-bottom: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+
+        .generic-module-row label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .generic-module-row input,
+        .generic-module-row select {
+            width: 100%;
+            padding: 9px;
+            font-size: 16px;
+            border: 1px solid #bbb;
+            border-radius: 5px;
+            background-color: white;
+        }
+
+        .generic-module-number {
+            font-weight: bold;
+            font-size: 17px;
+            padding-bottom: 9px;
+        }
+
+        .remove-module-button {
+            background-color: #777;
+        }
+
+        .generic-gpa-result-error {
+            color: #a12622;
+            background-color: #fdecea;
+        }
+
+        /* =========================
            MOBILE
            ========================= */
 
@@ -236,6 +283,14 @@
             button {
                 width: 100%;
             }
+
+            .generic-module-row {
+                grid-template-columns: 1fr;
+            }
+
+            .generic-module-number {
+                padding-bottom: 0;
+            }
         }
     </style>
 </head>
@@ -275,6 +330,10 @@
             <div id="gpaMenu"
                  class="submenu"
                  style="display: none; margin-left: 15px;">
+
+                <a onclick="showGenericGPA()">
+                    Generic GPA Calculator (ITE)
+                </a>
 
                 <a onclick="showGPA()">
                     HNITEC Precision Engineering (1 Yr)
@@ -331,6 +390,45 @@
                     domain to include useful tools for students. For now,
                     please enjoy the GPA calculator.
                 </p>
+
+            </section>
+
+
+            <!-- GENERIC GPA CALCULATOR -->
+
+            <section id="generic-gpa" style="display: none;">
+
+                <div class="calculator">
+
+                    <h2>Generic GPA Calculator (ITE)</h2>
+
+                    <p class="calculator-description">
+                        Enter the module credits and grade for each module.
+                        Add more modules if required. Grade points: A = 4,
+                        B = 3, C = 2, D = 1, F = 0.
+                    </p>
+
+                    <div id="genericModuleContainer"></div>
+
+                    <div class="buttons">
+                        <button onclick="addGenericModule()">
+                            + Add Another Module
+                        </button>
+
+                        <button onclick="calculateGenericGPA()">
+                            Calculate GPA
+                        </button>
+
+                        <button onclick="resetGenericGPA()">
+                            Reset
+                        </button>
+                    </div>
+
+                    <div id="genericGpaResult" class="result">
+                        Projected GPA will appear here.
+                    </div>
+
+                </div>
 
             </section>
 
@@ -653,6 +751,8 @@
 
             document.getElementById("gpa").style.display = "none";
 
+            document.getElementById("generic-gpa").style.display = "none";
+
             document.getElementById("qr-generator").style.display = "none";
 
         }
@@ -707,6 +807,14 @@ function toggleGPA() {
             hideAllPages();
 
             document.getElementById("gpa").style.display = "block";
+
+        }
+
+        function showGenericGPA() {
+
+            hideAllPages();
+
+            document.getElementById("generic-gpa").style.display = "block";
 
         }
         
@@ -849,6 +957,170 @@ function showQRGenerator() {
                 finalGPA.toFixed(2) +
                 "</strong>";
 
+        }
+
+
+        let genericModuleCount = 0;
+
+
+        function addGenericModule() {
+
+            const container =
+                document.getElementById("genericModuleContainer");
+
+            genericModuleCount++;
+
+            const row = document.createElement("div");
+            row.className = "generic-module-row";
+
+            row.innerHTML = `
+                <div class="generic-module-number">
+                    Module ${genericModuleCount}
+                </div>
+
+                <div>
+                    <label>Module Credits</label>
+                    <input
+                        type="number"
+                        class="generic-module-credit"
+                        min="0.5"
+                        step="0.5"
+                        placeholder="e.g. 6"
+                    >
+                </div>
+
+                <div>
+                    <label>Grade</label>
+                    <select class="generic-module-grade">
+                        <option value="">Select grade</option>
+                        <option value="4">A</option>
+                        <option value="3">B</option>
+                        <option value="2">C</option>
+                        <option value="1">D</option>
+                        <option value="0">F</option>
+                    </select>
+                </div>
+
+                <button
+                    type="button"
+                    class="remove-module-button"
+                    onclick="removeGenericModule(this)"
+                >
+                    Remove
+                </button>
+            `;
+
+            container.appendChild(row);
+            renumberGenericModules();
+        }
+
+
+        function removeGenericModule(button) {
+
+            const rows = document.querySelectorAll(
+                "#genericModuleContainer .generic-module-row"
+            );
+
+            if (rows.length <= 1) {
+                alert("At least one module is required.");
+                return;
+            }
+
+            button.parentElement.remove();
+            renumberGenericModules();
+        }
+
+
+        function renumberGenericModules() {
+
+            const rows = document.querySelectorAll(
+                "#genericModuleContainer .generic-module-row"
+            );
+
+            rows.forEach(function(row, index) {
+                row.querySelector(".generic-module-number").textContent =
+                    "Module " + (index + 1);
+            });
+
+            genericModuleCount = rows.length;
+        }
+
+
+        function calculateGenericGPA() {
+
+            const rows = document.querySelectorAll(
+                "#genericModuleContainer .generic-module-row"
+            );
+
+            let totalCredits = 0;
+            let totalQualityPoints = 0;
+
+            for (let i = 0; i < rows.length; i++) {
+
+                const credits = parseFloat(
+                    rows[i].querySelector(".generic-module-credit").value
+                );
+
+                const grade =
+                    rows[i].querySelector(".generic-module-grade").value;
+
+                if (isNaN(credits) || credits <= 0) {
+                    showGenericGpaError(
+                        "Please enter valid module credits for Module " +
+                        (i + 1) + "."
+                    );
+                    return;
+                }
+
+                if (grade === "") {
+                    showGenericGpaError(
+                        "Please select a grade for Module " +
+                        (i + 1) + "."
+                    );
+                    return;
+                }
+
+                totalCredits += credits;
+                totalQualityPoints += credits * Number(grade);
+            }
+
+            const gpa = totalQualityPoints / totalCredits;
+            const result = document.getElementById("genericGpaResult");
+
+            result.className = "result";
+            result.innerHTML =
+                "Projected GPA: <strong>" +
+                gpa.toFixed(2) +
+                "</strong><br><span style='font-size:14px; font-weight:normal;'>" +
+                "Total Module Credits: " +
+                totalCredits +
+                "</span>";
+        }
+
+
+        function showGenericGpaError(message) {
+
+            const result = document.getElementById("genericGpaResult");
+            result.className = "result generic-gpa-result-error";
+            result.textContent = message;
+        }
+
+
+        function resetGenericGPA() {
+
+            const container =
+                document.getElementById("genericModuleContainer");
+
+            container.innerHTML = "";
+            genericModuleCount = 0;
+
+            const result = document.getElementById("genericGpaResult");
+            result.className = "result";
+            result.textContent = "Projected GPA will appear here.";
+
+            addGenericModule();
+            addGenericModule();
+            addGenericModule();
         }
 
 
@@ -1077,7 +1349,12 @@ function downloadQR() {
     link.click();
 
 }
-    </script>
+    
+
+        addGenericModule();
+        addGenericModule();
+        addGenericModule();
+</script>
 
 </body>
 </html>
