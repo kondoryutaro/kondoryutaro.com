@@ -7,13 +7,18 @@
 <meta charset="UTF-8">
 
 <meta name="viewport"
-content="width=device-width, initial-scale=1.0">
+content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 <title>Bus Stop Data Collector</title>
 
 <style>
 
+html {
+    touch-action: manipulation;
+}
+
 body {
+    touch-action: manipulation;
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 6px;
@@ -318,9 +323,6 @@ function busArrives(service) {
         alighted: 0,
 
         busType: "",
-
-        crowdLevel: "",
-
         failedToBoard: 0
 
     };
@@ -396,9 +398,6 @@ function busDeparts(service) {
         dwell: dwellSeconds,
 
         busType: bus.busType,
-
-        crowdLevel: bus.crowdLevel,
-
         boarded: bus.boarded,
 
         alighted: bus.alighted,
@@ -443,9 +442,7 @@ function updateActiveBuses() {
         let bus =
             activeBuses[service];
 
-        if (bus.busType === undefined) bus.busType = "";
-        if (bus.crowdLevel === undefined) bus.crowdLevel = "";
-        if (bus.failedToBoard === undefined) bus.failedToBoard = 0;
+        if (bus.busType === undefined) bus.busType = "";        if (bus.failedToBoard === undefined) bus.failedToBoard = 0;
 
         let box =
             document.createElement("div");
@@ -471,16 +468,6 @@ function updateActiveBuses() {
         onclick="setBusField('${service}','busType','SD')">Single Deck</button>
         <button class="choice-button ${bus.busType === 'DD' ? 'selected' : ''}"
         onclick="setBusField('${service}','busType','DD')">Double Deck</button>
-        </div>
-
-        <h3>Crowd Level:</h3>
-        <div class="choice-row">
-        <button class="choice-button ${bus.crowdLevel === 'SEA' ? 'selected' : ''}"
-        onclick="setBusField('${service}','crowdLevel','SEA')">Seats Available</button>
-        <button class="choice-button ${bus.crowdLevel === 'SDA' ? 'selected' : ''}"
-        onclick="setBusField('${service}','crowdLevel','SDA')">Standing Available</button>
-        <button class="choice-button ${bus.crowdLevel === 'LSD' ? 'selected' : ''}"
-        onclick="setBusField('${service}','crowdLevel','LSD')">Limited Standing</button>
         </div>
 
         <h3>
@@ -663,7 +650,7 @@ function exportBusCSV() {
 
     "DwellTimeSeconds," +
 
-    "BusType,CrowdLevel," +
+    "BusType," +
 
     "Boarded,Alighted,FailedToBoard\n";
 
@@ -681,9 +668,6 @@ function exportBusCSV() {
         bus.dwell + "," +
 
         (bus.busType || "") + "," +
-
-        (bus.crowdLevel || "") + "," +
-
         bus.boarded + "," +
 
         bus.alighted + "," +
